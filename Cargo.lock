@@ -2468,7 +2468,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "spectre-tb"
+name = "spectre"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "spectre_core",
+ "spectre_time",
+]
+
+[[package]]
+name = "spectre_combat"
+version = "0.1.0"
+
+[[package]]
+name = "spectre_core"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
+name = "spectre_time"
 version = "0.1.0"
 dependencies = [
  "bevy",

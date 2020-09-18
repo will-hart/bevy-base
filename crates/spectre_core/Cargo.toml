@@ -1,0 +1,9 @@
+[package]
+name = "spectre_core"
+version = "0.1.0"
+authors = ["Will Hart <hart.wl@gmail.com>"]
+edition = "2018"
+
+
+[dependencies]
+bevy = "0.1.3" # override in consuming crate
