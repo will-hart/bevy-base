@@ -18,6 +18,7 @@ pub struct Buff {
     pub amount: f32,
 }
 
+/// A statistic of an entity that that can be modified (temporarily or permanently)
 pub struct BuffableStatistic {
     pub base_value: f32,
     pub value: f32,
@@ -33,16 +34,18 @@ impl BuffableStatistic {
         }
     }
 
+    /// sets the base value of the buffable statistic and updates its value
     pub fn set_base(&mut self, new_base: f32) {
         self.base_value = new_base;
         self.recalculate();
     }
 
-    pub fn update(&mut self, game_time: f32) {
+    /// updates a buffable statistic as effects expire
+    pub fn update(&mut self, game_time: f32) -> bool {
         // remove old buffs
         let len = self.buffs.len();
         if len == 0 {
-            return;
+            return false;
         }
 
         {
@@ -52,9 +55,13 @@ impl BuffableStatistic {
 
         if self.buffs.len() != len {
             self.recalculate();
+            return true;
         }
+
+        false
     }
 
+    /// recalculates the value of a buffable statistic based on the buffs and the base_value
     fn recalculate(&mut self) {
         let (abs, perc) = self.buffs[..].into_iter().fold((0., 0.), |acc, buff| {
             return (acc.0 + buff.amount, acc.1 + buff.percentage);
@@ -79,6 +86,15 @@ pub struct Stats {
 
     /// A flag that triggers updating child stats when this is update
     pub is_changed: bool,
+}
+
+impl Stats {
+    pub fn update(&mut self, elapsed: f32) {
+        let mut was_changed = self.strength.update(elapsed);
+        was_changed = was_changed || self.agility.update(elapsed);
+        was_changed = was_changed || self.intelligence.update(elapsed);
+        self.is_changed = was_changed;
+    }
 }
 
 pub struct Health {
@@ -124,19 +140,25 @@ pub struct CharacterStatsPlugin;
 impl Plugin for CharacterStatsPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_stage_before("update", "update_stats")
-            .add_system_to_stage("update_stats", refresh_movement.system())
+            .add_system_to_stage("update_stats", refresh_stats.system())
             .add_stage_after("update", "regeneration")
             .add_system_to_stage("regeneration", health_regeneration.system())
             .add_system_to_stage("regeneration", mana_regeneration.system());
     }
 }
 
-fn refresh_movement(
+fn refresh_stats(
+    game_time: Res<GameTime>,
     mut stats: Mut<Stats>,
     mut movement: Mut<Movement>,
     mut health: Mut<Health>,
     mut mana: Mut<Mana>,
 ) {
+    stats.update(game_time.elapsed_time);
+    movement.movement_speed.update(game_time.elapsed_time);
+    health.max_health.update(game_time.elapsed_time);
+    mana.max_mana.update(game_time.elapsed_time);
+
     if !stats.is_changed {
         return;
     }
