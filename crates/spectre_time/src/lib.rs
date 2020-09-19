@@ -4,6 +4,7 @@ use bevy::prelude::*;
 pub struct GameTime {
     pub game_speed: f32,
     pub elapsed_time: f32,
+    pub delta: f32,
 }
 
 impl Default for GameTime {
@@ -11,6 +12,7 @@ impl Default for GameTime {
         GameTime {
             game_speed: 0.0,
             elapsed_time: 0.0,
+            delta: 0.0,
         }
     }
 }
@@ -63,11 +65,11 @@ fn game_speed_update(
 }
 
 fn game_timer(time: Res<Time>, mut game_time: ResMut<GameTime>) {
-    let delta = time.delta_seconds * game_time.game_speed;
+    game_time.delta = time.delta_seconds * game_time.game_speed;
 
-    if delta < 0.01 {
+    if game_time.delta < 0.01 {
         return;
     }
 
-    game_time.elapsed_time += delta;
+    game_time.elapsed_time += game_time.delta;
 }
