@@ -1,5 +1,5 @@
 use bevy::{prelude::*, render::pass::ClearColor, window::WindowMode};
-use spectre_core::prelude::{BuffableStatistic, CharacterStats, Health, Movement, Stats};
+use spectre_core::prelude::{BuffableStatistic, CharacterStats, Health, Mana, Movement, Stats};
 use spectre_loaders::ResourceLoaderPlugin;
 use spectre_time::{GameSpeedRequest, GameTimePlugin};
 
@@ -25,13 +25,15 @@ fn main() {
 fn setup(mut commands: Commands) {
     commands.spawn(CharacterStats {
         stats: Stats {
-            strength: BuffableStatistic::new(10),
-            agility: BuffableStatistic::new(10),
-            intelligence: BuffableStatistic::new(10),
+            strength: BuffableStatistic::new(10.),
+            agility: BuffableStatistic::new(10.),
+            intelligence: BuffableStatistic::new(10.),
+            is_changed: true,
         },
-        health: Health::new(100),
+        health: Health::new(100.),
+        mana: Mana::new(200.),
         movement: Movement {
-            movement_speed: BuffableStatistic::new(50),
+            movement_speed: BuffableStatistic::new(50.),
         },
     });
 

@@ -2644,6 +2644,7 @@ name = "spectre_core"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "spectre_time",
 ]
 
 [[package]]
