@@ -1,4 +1,5 @@
 use bevy::{prelude::*, render::pass::ClearColor, window::WindowMode};
+use spectre_combat::prelude::AllegiancePlugin;
 use spectre_core::prelude::{BuffableStatistic, CharacterStats, Health, Mana, Movement, Stats};
 use spectre_loaders::ResourceLoaderPlugin;
 use spectre_time::{GameSpeedRequest, GameTimePlugin};
@@ -19,6 +20,7 @@ fn main() {
         .add_startup_system(setup.system())
         .add_plugin(GameTimePlugin)
         .add_plugin(ResourceLoaderPlugin)
+        .add_plugin(AllegiancePlugin)
         .run();
 }
 
