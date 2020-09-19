@@ -1,5 +1,6 @@
 use bevy::{prelude::*, render::pass::ClearColor, window::WindowMode};
 use spectre_core::prelude::{BuffableStatistic, CharacterStats, Health, Movement, Stats};
+use spectre_loaders::ResourceLoaderPlugin;
 use spectre_time::{GameSpeedRequest, GameTimePlugin};
 
 fn main() {
@@ -17,6 +18,7 @@ fn main() {
         .add_default_plugins()
         .add_startup_system(setup.system())
         .add_plugin(GameTimePlugin)
+        .add_plugin(ResourceLoaderPlugin)
         .run();
 }
 

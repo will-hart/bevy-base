@@ -1,5 +1,5 @@
 [package]
-name = "spectre-loaders"
+name = "spectre_loaders"
 version = "0.1.0"
 authors = ["William Hart <hart.wl@gmail.com>"]
 edition = "2018"
