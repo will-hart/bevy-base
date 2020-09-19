@@ -2630,11 +2630,16 @@ name = "spectre"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "spectre_animations",
  "spectre_combat",
  "spectre_core",
  "spectre_loaders",
  "spectre_time",
 ]
+
+[[package]]
+name = "spectre_animations"
+version = "0.1.0"
 
 [[package]]
 name = "spectre_combat"
