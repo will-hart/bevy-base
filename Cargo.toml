@@ -28,5 +28,6 @@ bevy = { git = "https://github.com/bevyengine/bevy" }
 # Local dependencies
 
 spectre_core = { path = "crates/spectre_core", version="0.1" }
+spectre_loaders = { path = "crates/spectre_loaders", version="0.1" }
 spectre_time = { path = "crates/spectre_time", version="0.1" }
 
