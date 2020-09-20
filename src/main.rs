@@ -1,4 +1,5 @@
 use bevy::{prelude::*, render::pass::ClearColor, window::WindowMode};
+use spectre_animations::prelude::{spawn_animated_spritesheet, AnimationPlugin};
 use spectre_combat::prelude::AllegiancePlugin;
 use spectre_core::prelude::{BuffableStatistic, CharacterStats, Health, Mana, Movement, Stats};
 use spectre_loaders::ResourceLoaderPlugin;
@@ -21,10 +22,20 @@ fn main() {
         .add_plugin(GameTimePlugin)
         .add_plugin(ResourceLoaderPlugin)
         .add_plugin(AllegiancePlugin)
+        .add_plugin(AnimationPlugin)
         .run();
 }
 
-fn setup(mut commands: Commands) {
+fn setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut textures: ResMut<Assets<Texture>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+) {
+    // spawn the camera
+    commands.spawn(Camera2dComponents::default());
+
+    // spawn a "character" with stats
     commands.spawn(CharacterStats {
         stats: Stats {
             strength: BuffableStatistic::new(10.),
@@ -39,5 +50,27 @@ fn setup(mut commands: Commands) {
         },
     });
 
+    // load an example spritesheet
+    // commands.spawn((AssetsToLoad {
+    //     asset_paths: vec!["assets/walk_sprite_sheet.png"],
+    // },));
+
+    // start the game
     commands.spawn((GameSpeedRequest::new(1.0),));
+
+    // cheat and load a sprite sheet animation synchronously
+    let texture_handle = asset_server
+        .load_sync(&mut textures, "assets/walk_sprite_sheet.png")
+        .unwrap();
+    let texture = textures.get(&texture_handle).unwrap();
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, texture.size, 9, 4);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
+    spawn_animated_spritesheet(
+        commands,
+        texture_atlas_handle,
+        0.05,
+        vec![(0, 8), (9, 17), (18, 26), (27, 35)],
+        Vec3::new(0., 0., 0.),
+    )
 }

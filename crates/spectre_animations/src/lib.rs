@@ -79,19 +79,21 @@ fn animate_sprites(mut query: Query<(&mut Timer, &mut TextureAtlasSprite, &mut A
 pub fn spawn_animated_spritesheet(
     mut commands: Commands,
     texture_atlas_handle: Handle<TextureAtlas>,
+    frame_duration: f32,
     animation_frames: Vec<(usize, usize)>,
+    location: Vec3,
 ) {
     commands
         .spawn(SpriteSheetComponents {
             texture_atlas: texture_atlas_handle,
-            transform: Transform::from_scale(1.0),
+            transform: Transform::from_scale(1.0).with_translation(location),
             ..Default::default()
         })
-        .with(Timer::from_seconds(0.1, true))
+        .with(Timer::from_seconds(frame_duration, true))
         .with(AnimationState {
             animations: animation_frames,
-            current_animation: 0,
+            current_animation: 1,
             current_idx: 0,
-            is_playing: false,
+            is_playing: true,
         });
 }
