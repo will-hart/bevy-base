@@ -7,7 +7,16 @@ pub mod prelude {
 pub struct Player;
 pub struct Npc;
 
-pub struct Side(u8);
+pub struct Side(usize);
+
+pub const SIDE_NEUTRAL: usize = 0;
+pub const SIDE_1: usize = 1;
+pub const SIDE_2: usize = 2;
+pub const SIDE_3: usize = 3;
+pub const SIDE_4: usize = 4;
+pub const SIDE_5: usize = 5;
+pub const SIDE_6: usize = 6;
+pub const SIDE_7: usize = 7;
 
 /// A resource which stores the relationships between sides
 /// The indices are the side idx (i.e. side 1 is 0b0000_0001),
@@ -25,34 +34,20 @@ pub enum SideRelationship {
     Enemy,
 }
 
-fn get_bit_idx(side: u8) -> usize {
-    for idx in 0..7 {
-        if side >> idx == 0 {
-            return idx;
-        }
-    }
-
-    // 0 implies no side
-    return 0;
-}
-
 impl SideRelationships {
-    /// Returns the first high bit index (starting from the lowest bit),
-    /// e.g. 0b0000_0001 should return 1. Used to convert a side u8 to a Vec index
-
     /// gets the relationship between two sides
     pub fn get_relationship(
         &self,
-        side: u8,
-        target: u8,
+        side: usize,
+        target_side: usize,
         relationships: &Vec<u8>,
     ) -> SideRelationship {
-        if target == 0 || side == 0 {
+        if target_side == SIDE_NEUTRAL || side == SIDE_NEUTRAL {
             return SideRelationship::Neutral;
         }
 
-        let reln = relationships[get_bit_idx(side)];
-        return if reln & target > 0 {
+        let reln = relationships[side as usize];
+        return if reln & (1 << target_side) > 0 {
             SideRelationship::Enemy
         } else {
             SideRelationship::Allied
@@ -60,21 +55,20 @@ impl SideRelationships {
     }
 
     /// sets the relationship between the two sides (works in both directions)
-    pub fn set_relationship(&mut self, from_side: u8, to_side: u8, is_enemy: bool) {
-        let from_idx = get_bit_idx(from_side);
-        let to_idx = get_bit_idx(to_side);
-
+    pub fn set_relationship(&mut self, from_side: usize, to_side: usize, is_enemy: bool) {
         if is_enemy {
-            self.0[from_idx] |= 0b1 << (to_idx - 1);
-            self.0[to_idx] |= 0b1 << (from_idx - 1);
+            self.0[from_side] |= 0b1 << to_side;
+            self.0[to_side] |= 0b1 << from_side;
         } else {
-            self.0[from_idx] &= !(0b1 << (to_idx - 1));
-            self.0[to_idx] &= !(0b1 << (from_idx - 1));
+            self.0[from_side] &= !(0b1 << to_side);
+            self.0[to_side] &= !(0b1 << from_side);
         }
     }
 }
 
-pub struct ChangeAllegiance(u8, u8, bool);
+/// Sets a changed allegiance between side 1 (.0) and side 2 (.0)
+/// Sets the allegiance the friendly if bool is true, enemy otherwise
+pub struct ChangeAllegiance(usize, usize, bool);
 
 pub struct AllegiancePlugin;
 
