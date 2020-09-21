@@ -1,97 +1,126 @@
-use bevy::{asset::HandleId, asset::LoadState, prelude::*};
-use std::iter;
+use bevy::{asset::Handle, asset::LoadState, prelude::*};
 
 pub struct ResourceLoaderPlugin;
 
 impl Plugin for ResourceLoaderPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_resource(LoadingStatus {
-            items_loaded: 0,
-            items_to_load: 0,
-            loading_handles: vec![],
-        })
-        .add_system(asset_loading_system.system());
+        app.add_resource(LoadingStatus::default())
+            .add_system(texture_loading_system.system());
     }
 }
 
+#[derive(Default)]
 pub struct LoadingStatus {
     pub items_loaded: usize,
     pub items_to_load: usize,
-    loading_handles: Vec<HandleId>,
+    pub initial_load_done: bool,
 }
 
-/// Stores paths to assets which will be loaded by the asset_loading_system
-pub struct AssetsToLoad {
+pub struct TextureLoadingData {
     /// The path to load the asset from
-    pub asset_paths: Vec<&'static str>,
+    pub path: String,
 
-    /// Optionally, a Vec of Optional u128 values to match IDs to the
-    /// equivalent index in the asset_paths Vec. For empty or incomplete
-    /// Vecs, None will be assumed for all remaining values
-    pub asset_ids: Vec<Option<u128>>,
+    /// an optional ID to assign to the texture once loaded
+    pub id: Option<u128>,
+
+    /// the texture handle (used to track loading progress)
+    pub handle: Option<Handle<Texture>>,
+
+    pub is_loaded: bool,
 }
 
-fn asset_loading_system(
+impl From<&str> for TextureLoadingData {
+    fn from(path: &str) -> Self {
+        TextureLoadingData {
+            path: String::from(path),
+            id: None,
+            handle: None,
+            is_loaded: false,
+        }
+    }
+}
+
+impl From<(&str, u128)> for TextureLoadingData {
+    fn from(data: (&str, u128)) -> Self {
+        TextureLoadingData {
+            path: String::from(data.0),
+            id: Some(data.1),
+            handle: None,
+            is_loaded: false,
+        }
+    }
+}
+
+/// Stores paths to textures which will be loaded by the asset_loading_system
+pub struct TexturesToLoad {
+    pub textures: Vec<TextureLoadingData>,
+}
+
+fn texture_loading_system(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut textures: ResMut<Assets<Texture>>,
     mut loading_status: ResMut<LoadingStatus>,
-    mut loading_query: Query<(Entity, &AssetsToLoad)>,
+    mut textures_to_load: Query<(Entity, &mut TexturesToLoad)>,
 ) {
     // trigger loading of new items
-    for (entity, loader) in &mut loading_query.iter() {
-        println!("Found a loader, adding {} assets", loader.asset_paths.len());
-
-        let ids = loader
-            .asset_ids
-            .clone()
-            .into_iter()
-            .chain(iter::repeat(None));
-
-        for (&path, id) in loader.asset_paths.iter().zip(ids) {
-            println!("--> {}", path);
-            let handle = asset_server.load_untyped(path).unwrap();
-
-            if let Some(_) = id {
-                println!("Should be applying an ID here!");
+    for (entity, mut loader) in &mut textures_to_load.iter() {
+        // drain filter, but not experimental
+        let mut i = 0;
+        while i < loader.textures.len() {
+            let tex = &mut loader.textures[i];
+            let handle = tex.handle;
+            if handle.is_none() {
+                tex.handle = Some(asset_server.load(tex.path.clone()).unwrap());
+                loading_status.items_to_load += 1;
+                i += 1;
+                continue;
             }
 
-            loading_status.items_to_load += 1;
-            loading_status.loading_handles.push(handle);
+            // check loading state
+            let load_state = asset_server.get_load_state(handle.unwrap());
+            if load_state.is_none() {
+                i += 1;
+                continue;
+            }
+
+            // if loaded, check if we need to assign an ID
+            tex.is_loaded = match load_state.unwrap() {
+                LoadState::Loaded(_) => {
+                    loading_status.items_loaded += 1;
+
+                    if tex.id.is_some() {
+                        // can only match up the ID here
+                        let asset = textures.get(&handle.unwrap()).unwrap().clone();
+                        textures.set(Handle::from_u128(tex.id.unwrap()), asset);
+                    }
+
+                    // texture is loaded, remove it
+                    true
+                }
+                _ => false,
+            };
+
+            if tex.is_loaded {
+                loader.textures.remove(i);
+            } else {
+                // texture is not loaded, check the next texture
+                i += 1;
+            }
         }
 
-        println!("Despawning entity");
-        commands.despawn(entity);
+        if loader.textures.len() == 0 {
+            println!("Despawning entity");
+            commands.despawn(entity);
+        }
     }
 
     // check if we are currently loading anything
     if loading_status.items_to_load == loading_status.items_loaded {
+        if loading_status.initial_load_done == false {
+            loading_status.initial_load_done = true;
+        }
+
         return;
     }
-
-    let len_before = loading_status.loading_handles.len();
-
-    // check loading progress
-    loading_status.loading_handles = loading_status
-        .loading_handles
-        .as_slice()
-        .iter()
-        .filter(|&handle_id| {
-            return match asset_server.get_load_state_untyped(*handle_id) {
-                Some(load_state) => {
-                    return match load_state {
-                        LoadState::Loaded(_) => false,
-                        _ => true,
-                    }
-                }
-                None => true,
-            };
-        })
-        .map(|h| *h)
-        .collect::<Vec<_>>();
-
-    loading_status.items_loaded += len_before - loading_status.loading_handles.len();
-    println!(
-        "{}/{} items loaded",
-        loading_status.items_loaded, loading_status.items_to_load
-    );
 }
