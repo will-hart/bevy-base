@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::pass::ClearColor, window::WindowMode};
 use spectre_animations::prelude::{spawn_animated_spritesheet, AnimationPlugin};
 use spectre_combat::prelude::AllegiancePlugin;
 use spectre_core::prelude::{BuffableStatistic, CharacterStats, Health, Mana, Movement, Stats};
-use spectre_loaders::ResourceLoaderPlugin;
+use spectre_loaders::{AssetsToLoad, ResourceLoaderPlugin};
 use spectre_time::{GameSpeedRequest, GameTimePlugin};
 
 fn main() {
@@ -19,6 +19,7 @@ fn main() {
         .add_resource(ClearColor(Color::rgb(0.005, 0.005, 0.005)))
         .add_default_plugins()
         .add_startup_system(setup.system())
+        .add_system(spawn_player_debug.system())
         .add_plugin(GameTimePlugin)
         .add_plugin(ResourceLoaderPlugin)
         .add_plugin(AllegiancePlugin)
@@ -26,12 +27,7 @@ fn main() {
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut textures: ResMut<Assets<Texture>>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-) {
+fn setup(mut commands: Commands) {
     // spawn the camera
     commands.spawn(Camera2dComponents::default());
 
@@ -50,17 +46,31 @@ fn setup(
         },
     });
 
-    // load an example spritesheet
-    // commands.spawn((AssetsToLoad {
-    //     asset_paths: vec!["assets/walk_sprite_sheet.png"],
-    // },));
+    // this loaders approach requires at least one tick of the game loop before
+    // assets handles are available, therefore can't directly spawn player sprite here
+    commands.spawn((AssetsToLoad {
+        asset_paths: vec!["assets/walk_sprite_sheet.png"],
+    },));
 
     // start the game
     commands.spawn((GameSpeedRequest::new(1.0),));
+}
+
+// demonstrates spawning a player using the spawn_animated_spritesheet helper
+fn spawn_player_debug(
+    commands: Commands,
+    input: Res<Input<KeyCode>>,
+    asset_server: Res<AssetServer>,
+    textures: ResMut<Assets<Texture>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+) {
+    if !input.just_pressed(KeyCode::Space) {
+        return;
+    }
 
     // cheat and load a sprite sheet animation synchronously
     let texture_handle = asset_server
-        .load_sync(&mut textures, "assets/walk_sprite_sheet.png")
+        .get_handle("assets/walk_sprite_sheet.png")
         .unwrap();
     let texture = textures.get(&texture_handle).unwrap();
     let texture_atlas = TextureAtlas::from_grid(texture_handle, texture.size, 9, 4);
