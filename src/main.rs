@@ -5,6 +5,8 @@ use spectre_core::prelude::{BuffableStatistic, CharacterStats, Health, Mana, Mov
 use spectre_loaders::{ResourceLoaderPlugin, TexturesToLoad};
 use spectre_time::{GameSpeedRequest, GameTimePlugin};
 
+const ANIMATED_SPRITESHEED_ID: u128 = 324890576394765893475;
+
 fn main() {
     App::build()
         .add_resource(WindowDescriptor {
@@ -49,11 +51,7 @@ fn setup(mut commands: Commands) {
     // this loaders approach requires at least one tick of the game loop before
     // assets handles are available, therefore can't directly spawn player sprite here
     commands.spawn((TexturesToLoad {
-        textures: vec![(
-            "assets/walk_sprite_sheet.png",
-            2467138740918751785091375 as u128,
-        )
-            .into()],
+        textures: vec![("assets/walk_sprite_sheet.png", ANIMATED_SPRITESHEED_ID).into()],
     },));
 
     // start the game
@@ -64,7 +62,6 @@ fn setup(mut commands: Commands) {
 fn spawn_player_debug(
     commands: Commands,
     input: Res<Input<KeyCode>>,
-    asset_server: Res<AssetServer>,
     textures: ResMut<Assets<Texture>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
@@ -72,12 +69,9 @@ fn spawn_player_debug(
         return;
     }
 
-    // cheat and load a sprite sheet animation synchronously
-    let texture_handle = asset_server
-        .get_handle("assets/walk_sprite_sheet.png")
-        .unwrap();
-    let texture = textures.get(&texture_handle).unwrap();
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, texture.size, 9, 4);
+    let handle: Handle<Texture> = Handle::from_u128(ANIMATED_SPRITESHEED_ID);
+    let texture = textures.get(&handle).unwrap();
+    let texture_atlas = TextureAtlas::from_grid(handle, texture.size, 9, 4);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
     spawn_animated_spritesheet(
