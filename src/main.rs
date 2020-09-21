@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::pass::ClearColor, window::WindowMode};
 use spectre_animations::prelude::{spawn_animated_spritesheet, AnimationPlugin};
 use spectre_combat::prelude::AllegiancePlugin;
 use spectre_core::prelude::{BuffableStatistic, CharacterStats, Health, Mana, Movement, Stats};
-use spectre_loaders::{AssetsToLoad, ResourceLoaderPlugin};
+use spectre_loaders::{ResourceLoaderPlugin, TexturesToLoad};
 use spectre_time::{GameSpeedRequest, GameTimePlugin};
 
 fn main() {
@@ -48,8 +48,12 @@ fn setup(mut commands: Commands) {
 
     // this loaders approach requires at least one tick of the game loop before
     // assets handles are available, therefore can't directly spawn player sprite here
-    commands.spawn((AssetsToLoad {
-        asset_paths: vec!["assets/walk_sprite_sheet.png"],
+    commands.spawn((TexturesToLoad {
+        textures: vec![(
+            "assets/walk_sprite_sheet.png",
+            2467138740918751785091375 as u128,
+        )
+            .into()],
     },));
 
     // start the game

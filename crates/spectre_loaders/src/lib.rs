@@ -118,9 +118,15 @@ fn texture_loading_system(
     // check if we are currently loading anything
     if loading_status.items_to_load == loading_status.items_loaded {
         if loading_status.initial_load_done == false {
+            println!("Loading complete");
             loading_status.initial_load_done = true;
         }
 
         return;
     }
+
+    println!(
+        "Loaded {} of {} textures",
+        loading_status.items_loaded, loading_status.items_to_load
+    );
 }
