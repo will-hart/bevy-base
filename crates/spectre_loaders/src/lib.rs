@@ -1,4 +1,5 @@
 use bevy::{asset::HandleId, asset::LoadState, prelude::*};
+use std::iter;
 
 pub struct ResourceLoaderPlugin;
 
@@ -19,8 +20,15 @@ pub struct LoadingStatus {
     loading_handles: Vec<HandleId>,
 }
 
+/// Stores paths to assets which will be loaded by the asset_loading_system
 pub struct AssetsToLoad {
+    /// The path to load the asset from
     pub asset_paths: Vec<&'static str>,
+
+    /// Optionally, a Vec of Optional u128 values to match IDs to the
+    /// equivalent index in the asset_paths Vec. For empty or incomplete
+    /// Vecs, None will be assumed for all remaining values
+    pub asset_ids: Vec<Option<u128>>,
 }
 
 fn asset_loading_system(
@@ -33,9 +41,19 @@ fn asset_loading_system(
     for (entity, loader) in &mut loading_query.iter() {
         println!("Found a loader, adding {} assets", loader.asset_paths.len());
 
-        for &path in loader.asset_paths.iter() {
+        let ids = loader
+            .asset_ids
+            .clone()
+            .into_iter()
+            .chain(iter::repeat(None));
+
+        for (&path, id) in loader.asset_paths.iter().zip(ids) {
             println!("--> {}", path);
             let handle = asset_server.load_untyped(path).unwrap();
+
+            if let Some(_) = id {
+                println!("Should be applying an ID here!");
+            }
 
             loading_status.items_to_load += 1;
             loading_status.loading_handles.push(handle);
