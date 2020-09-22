@@ -31,31 +31,30 @@ fn main() {
 
 fn setup(mut commands: Commands) {
     // spawn the camera
-    commands.spawn(Camera2dComponents::default());
-
-    // spawn a "character" with stats
-    commands.spawn(CharacterStats {
-        stats: Stats {
-            strength: BuffableStatistic::new(10.),
-            agility: BuffableStatistic::new(10.),
-            intelligence: BuffableStatistic::new(10.),
-            is_changed: true,
-        },
-        health: Health::new(100.),
-        mana: Mana::new(200.),
-        movement: Movement {
-            movement_speed: BuffableStatistic::new(50.),
-        },
-    });
-
-    // this loaders approach requires at least one tick of the game loop before
-    // assets handles are available, therefore can't directly spawn player sprite here
-    commands.spawn((TexturesToLoad {
-        textures: vec![("assets/walk_sprite_sheet.png", ANIMATED_SPRITESHEED_ID).into()],
-    },));
-
-    // start the game
-    commands.spawn((GameSpeedRequest::new(1.0),));
+    commands
+        .spawn(Camera2dComponents::default())
+        .spawn(UiCameraComponents::default())
+        // spawn a "character" with stats
+        .spawn(CharacterStats {
+            stats: Stats {
+                strength: BuffableStatistic::new(10.),
+                agility: BuffableStatistic::new(10.),
+                intelligence: BuffableStatistic::new(10.),
+                is_changed: true,
+            },
+            health: Health::new(100.),
+            mana: Mana::new(200.),
+            movement: Movement {
+                movement_speed: BuffableStatistic::new(50.),
+            },
+        })
+        // this loaders approach requires at least one tick of the game loop before
+        // assets handles are available, therefore can't directly spawn player sprite here
+        .spawn((TexturesToLoad {
+            textures: vec![("assets/walk_sprite_sheet.png", ANIMATED_SPRITESHEED_ID).into()],
+        },))
+        // start the game clock running
+        .spawn((GameSpeedRequest::new(1.0),));
 }
 
 // demonstrates spawning a player using the spawn_animated_spritesheet helper
