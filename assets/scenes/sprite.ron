@@ -1,0 +1,114 @@
+[
+  (
+    entity: 2,
+    components: [
+      {
+        "type": "Transform",
+        "map": {
+          "value": {
+            "type": "Mat4",
+            "value": (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0),
+          },
+        },
+      },
+      {
+        "type": "Draw",
+        "map": {
+          "is_visible": true,
+          "is_transparent": true,
+        },
+      },
+      {
+        "type": "RenderPipelines",
+        "map": {
+          "pipelines": {
+            "type": "alloc::vec::Vec<bevy_render::pipeline::render_pipelines::RenderPipeline>",
+            "seq": [
+              {
+                "type": "bevy_render::pipeline::render_pipelines::RenderPipeline",
+                "map": {
+                  "pipeline": {
+                    "type": "Handle<PipelineDescriptor>",
+                    "map": {
+                      "id": {
+                        "type": "HandleId",
+                        "value": ("43d5e3ef-c491-414b-8e7d-8432db3e34f7"),
+                      },
+                    },
+                  },
+                  "specialization": {
+                    "type": "PipelineSpecialization",
+                    "map": {
+                      "shader_specialization": {
+                        "type": "ShaderSpecialization",
+                        "value": (
+                          shader_defs: [],
+                        ),
+                      },
+                      "primitive_topology": {
+                        "type": "PrimitiveTopology",
+                        "value": TriangleList,
+                      },
+                      "dynamic_bindings": {
+                        "type": "alloc::vec::Vec<bevy_render::pipeline::pipeline_compiler::DynamicBinding>",
+                        "seq": [
+                          {
+                            "type": "DynamicBinding",
+                            "value": (
+                              bind_group: 2,
+                              binding: 0,
+                            ),
+                          },
+                          {
+                            "type": "DynamicBinding",
+                            "value": (
+                              bind_group: 2,
+                              binding: 1,
+                            ),
+                          },
+                        ],
+                      },
+                      "sample_count": 1,
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      {
+        "type": "Timer",
+        "map": {
+          "elapsed": 0.0038875192,
+          "duration": 0.05,
+          "finished": true,
+          "just_finished": true,
+          "repeating": true,
+        },
+      },
+      {
+        "type": "MainPass",
+        "map": {},
+      },
+      {
+        "type": "Handle<TextureAtlas>",
+        "map": {
+          "id": {
+            "type": "HandleId",
+            "value": ("9a3a113e-c683-4239-8fe1-c665309a249e"),
+          },
+        },
+      },
+      {
+        "type": "Handle<Mesh>",
+        "map": {
+          "id": {
+            "type": "HandleId",
+            "value": ("6b2221d4-ac05-4ab9-9399-c7562cd26905"),
+          },
+        },
+      },
+    ],
+  ),
+]
