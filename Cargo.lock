@@ -2636,6 +2636,7 @@ dependencies = [
  "spectre_combat",
  "spectre_core",
  "spectre_loaders",
+ "spectre_state",
  "spectre_time",
 ]
 
@@ -2667,6 +2668,10 @@ version = "0.1.0"
 dependencies = [
  "bevy",
 ]
+
+[[package]]
+name = "spectre_state"
+version = "0.1.0"
 
 [[package]]
 name = "spectre_time"

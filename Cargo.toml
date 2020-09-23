@@ -31,5 +31,6 @@ spectre_animations = { path = "crates/spectre_animations", version = "0.1" }
 spectre_combat = { path = "crates/spectre_combat", version = "0.1" }
 spectre_core = { path = "crates/spectre_core", version="0.1" }
 spectre_loaders = { path = "crates/spectre_loaders", version="0.1" }
+spectre_state = { path = "crates/spectre_state", version="0.1" }
 spectre_time = { path = "crates/spectre_time", version="0.1" }
 
