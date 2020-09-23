@@ -2,10 +2,19 @@ use bevy::{prelude::*, render::pass::ClearColor, window::WindowMode};
 use spectre_animations::prelude::{spawn_animated_spritesheet, AnimationPlugin};
 use spectre_combat::prelude::AllegiancePlugin;
 use spectre_core::prelude::{BuffableStatistic, CharacterStats, Health, Mana, Movement, Stats};
-use spectre_loaders::{ResourceLoaderPlugin, TexturesToLoad};
+use spectre_loaders::{LoadingStatus, ResourceLoaderPlugin, TexturesToLoad};
+use spectre_state::*;
 use spectre_time::{GameSpeedRequest, GameTimePlugin};
 
 const ANIMATED_SPRITESHEED_ID: u128 = 324890576394765893475;
+
+#[derive(Clone, Copy, Debug)]
+#[allow(dead_code)]
+enum MyGameScenes {
+    Loading,
+    Menu,
+    Game,
+}
 
 fn main() {
     App::build()
@@ -26,6 +35,11 @@ fn main() {
         .add_plugin(ResourceLoaderPlugin)
         .add_plugin(AllegiancePlugin)
         .add_plugin(AnimationPlugin)
+        .add_resource(GameState::<MyGameScenes> {
+            current: GameStateStatus::Idle,
+            next: None,
+        })
+        .add_system(game_state_transitions.system())
         .run();
 }
 
@@ -57,13 +71,46 @@ fn setup(mut commands: Commands) {
         .spawn((GameSpeedRequest::new(1.0),));
 }
 
+fn game_state_transitions(
+    loading: Res<LoadingStatus>,
+    mut game_state: ResMut<GameState<MyGameScenes>>,
+) {
+    game_state.update();
+    match game_state.current {
+        GameStateStatus::Idle => game_state.set_transition(MyGameScenes::Loading),
+        GameStateStatus::Running(state) => match state {
+            MyGameScenes::Loading => {
+                if loading.initial_load_done {
+                    game_state.set_transition(MyGameScenes::Menu);
+                }
+            }
+            MyGameScenes::Menu => {
+                game_state.set_transition(MyGameScenes::Game);
+            }
+            _ => return,
+        },
+        _ => return,
+    };
+}
+
 // demonstrates spawning a player using the spawn_animated_spritesheet helper
 fn spawn_player_debug(
     commands: Commands,
     input: Res<Input<KeyCode>>,
+    game_state: Res<GameState<MyGameScenes>>,
     textures: ResMut<Assets<Texture>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
+    if !match game_state.current {
+        GameStateStatus::Running(scene) => match scene {
+            MyGameScenes::Game => true,
+            _ => false,
+        },
+        _ => false,
+    } {
+        return;
+    }
+
     if !input.just_pressed(KeyCode::Space) {
         return;
     }

@@ -1,4 +1,6 @@
-#[derive(Debug)]
+/// Inspired by https://github.com/Bobox214/Kataster/tree/master/src (MIT License)
+use core::fmt::Debug;
+
 pub enum GameStateStatus<T> {
     Idle,
     Entered(T),
@@ -7,13 +9,12 @@ pub enum GameStateStatus<T> {
 }
 
 /// A resource which should be added to the world with a custom scene enum
-#[derive(Debug)]
-pub struct GameState<TScene: Clone + Copy> {
+pub struct GameState<TScene: Clone + Copy + Debug> {
     pub current: GameStateStatus<TScene>,
     pub next: Option<TScene>,
 }
 
-impl<TScene: Clone + Copy> GameState<TScene> {
+impl<TScene: Clone + Copy + Debug> GameState<TScene> {
     /// Set the current transition, to be carried out in the next state update
     pub fn set_transition(&mut self, next: TScene) {
         self.next = Some(next);
@@ -28,16 +29,32 @@ impl<TScene: Clone + Copy> GameState<TScene> {
 
         match &self.current {
             GameStateStatus::Idle => {
-                self.current = GameStateStatus::Entered(self.next.unwrap());
+                match self.next {
+                    Some(next_state) => {
+                        println!("Transition IDLE to ENTERED::{:?}", next_state);
+                        self.current = GameStateStatus::Entered(next_state);
+                    }
+                    None => {
+                        // Shouldn't this be impossible given check above?
+                        println!("Transition from IDLE ignored as no next_state");
+                    }
+                };
             }
             GameStateStatus::Entered(state) => {
+                println!("Transition ENTERED to RUNNING::{:?}", *state);
                 self.next = None;
                 self.current = GameStateStatus::Running(*state);
             }
-            GameStateStatus::Exiting(_) => {
+            GameStateStatus::Exiting(current_state) => {
+                println!(
+                    "Transition EXITING::{:?} to ENTERED::{:?}",
+                    *current_state,
+                    self.next.unwrap()
+                );
                 self.current = GameStateStatus::Entered(self.next.unwrap());
             }
             GameStateStatus::Running(state) => {
+                println!("Transition RUNNING to EXITING::{:?}", *state);
                 self.current = GameStateStatus::Exiting(*state);
             }
         };
@@ -49,6 +66,7 @@ mod tests {
     use super::*;
 
     #[derive(Clone, Copy, Debug)]
+    #[allow(dead_code)]
     pub enum TestStates {
         A,
         B,
