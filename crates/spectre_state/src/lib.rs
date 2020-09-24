@@ -1,16 +1,17 @@
 /// Inspired by https://github.com/Bobox214/Kataster/tree/master/src (MIT License)
 use core::fmt::Debug;
 
-pub enum GameStateStatus<T> {
+pub enum GameStateStatus {
     Idle,
-    Entered(T),
-    Exiting(T),
-    Running(T),
+    Entered,
+    Exiting,
+    Running,
 }
 
 /// A resource which should be added to the world with a custom scene enum
 pub struct GameState<TScene: Clone + Copy + Debug> {
-    pub current: GameStateStatus<TScene>,
+    pub status: GameStateStatus,
+    pub current: Option<TScene>,
     pub next: Option<TScene>,
 }
 
@@ -23,41 +24,67 @@ impl<TScene: Clone + Copy + Debug> GameState<TScene> {
     /// Update the state, moving from Idle >> Entering >> Running or
     /// Running >> Exiting >> Entering >> Running one frame at a time
     pub fn update(&mut self) {
-        if self.next.is_none() {
-            return;
-        }
-
-        match &self.current {
+        match &self.status {
             GameStateStatus::Idle => {
                 match self.next {
                     Some(next_state) => {
-                        println!("Transition IDLE to ENTERED::{:?}", next_state);
-                        self.current = GameStateStatus::Entered(next_state);
+                        println!("[Transition] IDLE to ENTERED::{:?}", next_state);
+                        self.status = GameStateStatus::Entered;
+                        self.current = Some(next_state);
                     }
                     None => {
-                        // Shouldn't this be impossible given check above?
-                        println!("Transition from IDLE ignored as no next_state");
+                        println!("[Transition] IDLE to ? ignored as no next state");
                     }
                 };
             }
-            GameStateStatus::Entered(state) => {
-                println!("Transition ENTERED to RUNNING::{:?}", *state);
-                self.next = None;
-                self.current = GameStateStatus::Running(*state);
-            }
-            GameStateStatus::Exiting(current_state) => {
+            GameStateStatus::Entered => {
                 println!(
-                    "Transition EXITING::{:?} to ENTERED::{:?}",
-                    *current_state,
-                    self.next.unwrap()
+                    "[Transition] ENTERED::{:?} to RUNNING::{:?}",
+                    self.current, self.current
                 );
-                self.current = GameStateStatus::Entered(self.next.unwrap());
+                self.status = GameStateStatus::Running;
             }
-            GameStateStatus::Running(state) => {
-                println!("Transition RUNNING to EXITING::{:?}", *state);
-                self.current = GameStateStatus::Exiting(*state);
-            }
-        };
+            GameStateStatus::Exiting => match self.next {
+                Some(_) => {
+                    match self.current {
+                        None => println!(
+                            "[Transition] EXITING::NoState to ENTERED::{:?}",
+                            self.next.unwrap()
+                        ),
+                        Some(_) => println!(
+                            "[Transition] EXITING::{:?} to ENTERED::{:?}",
+                            self.current.unwrap(),
+                            self.next.unwrap()
+                        ),
+                    }
+
+                    self.status = GameStateStatus::Entered;
+                    self.current = self.next.clone();
+                    self.next = None;
+                }
+                _ => {
+                    println!("[Transition] Can't move from EXITING::{:?} to ENTERING::None, no next state defined", self.current.unwrap());
+                }
+            },
+            GameStateStatus::Running => match self.next {
+                None => {} // no transition queued
+                Some(_) => {
+                    match self.current {
+                        None => println!(
+                            "[Transition] RUNNING::NoState, EXITING::{:?}",
+                            self.next.unwrap()
+                        ),
+                        Some(_) => println!(
+                            "[Transition] RUNNING::{:?} to EXITING::{:?}, next state is {:?}",
+                            self.current.unwrap(),
+                            self.current.unwrap(),
+                            self.next.unwrap(),
+                        ),
+                    }
+                    self.status = GameStateStatus::Exiting;
+                }
+            },
+        }
     }
 }
 
@@ -75,20 +102,21 @@ mod tests {
     #[test]
     fn transitions_on_update() {
         let mut gs = GameState::<TestStates> {
-            current: GameStateStatus::Idle,
+            status: GameStateStatus::Idle,
+            current: None,
             next: Some(TestStates::A),
         };
 
-        match gs.current {
+        match gs.status {
             GameStateStatus::Idle => assert!(true),
             _ => assert!(false),
         };
 
         gs.update();
 
-        match gs.current {
-            GameStateStatus::Entered(entered_state) => match entered_state {
-                TestStates::A => assert!(true),
+        match gs.status {
+            GameStateStatus::Entered => match gs.current {
+                Some(TestStates::A) => assert!(true),
                 _ => assert!(false),
             },
             _ => assert!(false),
