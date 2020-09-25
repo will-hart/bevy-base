@@ -1,16 +1,16 @@
 /// Inspired by https://github.com/Bobox214/Kataster/tree/master/src (MIT License)
 use core::fmt::Debug;
 
-pub enum GameStateStatus {
+pub enum GameStatus {
     Idle,
-    Entered,
+    Entering,
     Exiting,
     Running,
 }
 
 /// A resource which should be added to the world with a custom scene enum
 pub struct GameState<TScene: Clone + Copy + Debug> {
-    pub status: GameStateStatus,
+    pub status: GameStatus,
     pub current: Option<TScene>,
     pub next: Option<TScene>,
 }
@@ -21,15 +21,29 @@ impl<TScene: Clone + Copy + Debug> GameState<TScene> {
         self.next = Some(next);
     }
 
+    /// returns true if the current scene is defined and matches the given scene
+    pub fn is_in_scene(&self, scene: &TScene) -> bool {
+        if self.current.is_none() {
+            return false;
+        }
+
+        std::mem::discriminant(&self.current.unwrap()) == std::mem::discriminant(scene)
+    }
+
+    /// returns true if the current status matches the given scene
+    pub fn is_in_status(&self, status: &GameStatus) -> bool {
+        std::mem::discriminant(&self.status) == std::mem::discriminant(status)
+    }
+
     /// Update the state, moving from Idle >> Entering >> Running or
     /// Running >> Exiting >> Entering >> Running one frame at a time
     pub fn update(&mut self) {
         match &self.status {
-            GameStateStatus::Idle => {
+            GameStatus::Idle => {
                 match self.next {
                     Some(next_state) => {
                         println!("[Transition] IDLE to ENTERED::{:?}", next_state);
-                        self.status = GameStateStatus::Entered;
+                        self.status = GameStatus::Entering;
                         self.current = Some(next_state);
                     }
                     None => {
@@ -37,14 +51,14 @@ impl<TScene: Clone + Copy + Debug> GameState<TScene> {
                     }
                 };
             }
-            GameStateStatus::Entered => {
+            GameStatus::Entering => {
                 println!(
                     "[Transition] ENTERED::{:?} to RUNNING::{:?}",
                     self.current, self.current
                 );
-                self.status = GameStateStatus::Running;
+                self.status = GameStatus::Running;
             }
-            GameStateStatus::Exiting => match self.next {
+            GameStatus::Exiting => match self.next {
                 Some(_) => {
                     match self.current {
                         None => println!(
@@ -58,7 +72,7 @@ impl<TScene: Clone + Copy + Debug> GameState<TScene> {
                         ),
                     }
 
-                    self.status = GameStateStatus::Entered;
+                    self.status = GameStatus::Entering;
                     self.current = self.next.clone();
                     self.next = None;
                 }
@@ -66,7 +80,7 @@ impl<TScene: Clone + Copy + Debug> GameState<TScene> {
                     println!("[Transition] Can't move from EXITING::{:?} to ENTERING::None, no next state defined", self.current.unwrap());
                 }
             },
-            GameStateStatus::Running => match self.next {
+            GameStatus::Running => match self.next {
                 None => {} // no transition queued
                 Some(_) => {
                     match self.current {
@@ -81,7 +95,7 @@ impl<TScene: Clone + Copy + Debug> GameState<TScene> {
                             self.next.unwrap(),
                         ),
                     }
-                    self.status = GameStateStatus::Exiting;
+                    self.status = GameStatus::Exiting;
                 }
             },
         }
@@ -102,20 +116,20 @@ mod tests {
     #[test]
     fn transitions_on_update() {
         let mut gs = GameState::<TestStates> {
-            status: GameStateStatus::Idle,
+            status: GameStatus::Idle,
             current: None,
             next: Some(TestStates::A),
         };
 
         match gs.status {
-            GameStateStatus::Idle => assert!(true),
+            GameStatus::Idle => assert!(true),
             _ => assert!(false),
         };
 
         gs.update();
 
         match gs.status {
-            GameStateStatus::Entered => match gs.current {
+            GameStatus::Entering => match gs.current {
                 Some(TestStates::A) => assert!(true),
                 _ => assert!(false),
             },

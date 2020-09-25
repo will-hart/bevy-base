@@ -4,36 +4,21 @@ use spectre_state::*;
 
 use super::MyGameScenes;
 
-pub struct LoadingSceneItem;
+pub struct LoadingSceneEntity;
 
 pub fn run_loading_scene(
-    commands: Commands,
     game_state: Res<GameState<MyGameScenes>>,
     loading_state: Res<LoadingStatus>,
-    asset_server: Res<AssetServer>,
-    loading_scene_items: Query<(Entity, &LoadingSceneItem)>,
-    loading_text: Query<With<LoadingSceneItem, &mut Text>>,
+    mut loading_text: Query<With<LoadingSceneEntity, &mut Text>>,
 ) {
-    let matched = match game_state.current {
-        Some(MyGameScenes::Loading) => true,
-        _ => false,
-    };
-
-    if !matched {
+    if !game_state.is_in_scene(&MyGameScenes::Loading)
+        || !game_state.is_in_status(&GameStatus::Running)
+    {
         return;
     }
 
-    match game_state.status {
-        GameStateStatus::Entered => setup(commands, asset_server),
-        GameStateStatus::Running => run(loading_state, loading_text),
-        GameStateStatus::Exiting => teardown(commands, loading_scene_items),
-        GameStateStatus::Idle => {}
-    };
-}
-
-fn run(loading_state: Res<LoadingStatus>, mut query: Query<With<LoadingSceneItem, &mut Text>>) {
     println!("Running loading screen");
-    for mut text in &mut query.iter() {
+    for mut text in &mut loading_text.iter() {
         text.value = format!(
             "Loading {} of {}",
             loading_state.items_loaded, loading_state.items_to_load
@@ -41,12 +26,20 @@ fn run(loading_state: Res<LoadingStatus>, mut query: Query<With<LoadingSceneItem
     }
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_loading_scene(
+    mut commands: Commands,
+    game_state: Res<GameState<MyGameScenes>>,
+    asset_server: Res<AssetServer>,
+) {
+    if !game_state.is_in_scene(&MyGameScenes::Loading)
+        || !game_state.is_in_status(&GameStatus::Entering)
+    {
+        return;
+    }
+
     println!("Setting up loading screen");
     let font_handle = asset_server.load("assets/fonts/teletactile.ttf").unwrap();
     commands
-        // 2d camera
-        .spawn(UiCameraComponents::default())
         // texture
         .spawn(TextComponents {
             style: Style {
@@ -63,10 +56,20 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
             ..Default::default()
         })
-        .with(LoadingSceneItem);
+        .with(LoadingSceneEntity);
 }
 
-fn teardown(mut commands: Commands, mut loading_scene_items: Query<(Entity, &LoadingSceneItem)>) {
+pub fn teardown_loading_scene(
+    mut commands: Commands,
+    game_state: Res<GameState<MyGameScenes>>,
+    mut loading_scene_items: Query<(Entity, &LoadingSceneEntity)>,
+) {
+    if !game_state.is_in_scene(&MyGameScenes::Loading)
+        || !game_state.is_in_status(&GameStatus::Exiting)
+    {
+        return;
+    }
+
     println!("Tearing down loading screen");
     for (entity, _) in &mut loading_scene_items.iter() {
         commands.despawn(entity);
