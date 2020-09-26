@@ -74,8 +74,8 @@ fn game_state_transitions(
                     game_state.set_transition(MyGameScenes::Menu);
                 }
             }
-            _ => return,
+            _ => {}
         },
-        _ => return,
+        _ => {}
     };
 }

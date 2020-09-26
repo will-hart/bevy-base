@@ -63,8 +63,8 @@ impl BuffableStatistic {
 
     /// recalculates the value of a buffable statistic based on the buffs and the base_value
     fn recalculate(&mut self) {
-        let (abs, perc) = self.buffs[..].into_iter().fold((0., 0.), |acc, buff| {
-            return (acc.0 + buff.amount, acc.1 + buff.percentage);
+        let (abs, perc) = self.buffs[..].iter().fold((0., 0.), |acc, buff| {
+            (acc.0 + buff.amount, acc.1 + buff.percentage)
         });
 
         self.value = (self.base_value as f32 * (1.0 + perc)).floor() + abs;

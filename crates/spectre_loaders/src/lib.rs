@@ -109,7 +109,7 @@ fn texture_loading_system(
             }
         }
 
-        if loader.textures.len() == 0 {
+        if loader.textures.is_empty() {
             println!("Despawning entity");
             commands.despawn(entity);
         }
@@ -117,7 +117,7 @@ fn texture_loading_system(
 
     // check if we are currently loading anything
     if loading_status.items_to_load == loading_status.items_loaded {
-        if loading_status.initial_load_done == false {
+        if !loading_status.initial_load_done {
             println!("Loading complete");
             loading_status.initial_load_done = true;
         }
