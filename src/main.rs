@@ -6,9 +6,11 @@ use spectre_loaders::{ResourceLoaderPlugin, TexturesToLoad};
 use spectre_time::{GameSpeedRequest, GameTimePlugin};
 
 mod constants;
+mod data;
 mod game_scenes;
 
 use constants::ANIMATED_SPRITESHEED_ID;
+use data::DataFileLoaderPlugin;
 use game_scenes::*;
 
 fn main() {
@@ -27,6 +29,7 @@ fn main() {
         .add_startup_system(setup.system())
         .add_plugin(GameTimePlugin)
         .add_plugin(ResourceLoaderPlugin)
+        // .add_plugin(DataFileLoaderPlugin)
         .add_plugin(AllegiancePlugin)
         .add_plugin(AnimationPlugin)
         .add_plugin(GameStatePlugin)
