@@ -1,5 +1,7 @@
 use bevy::{asset::Handle, asset::LoadState, prelude::*};
 
+pub mod data_loaders;
+
 pub struct ResourceLoaderPlugin;
 
 impl Plugin for ResourceLoaderPlugin {
@@ -126,7 +128,7 @@ fn texture_loading_system(
     }
 
     println!(
-        "Loaded {} of {} textures",
+        "Loaded {} of {} items",
         loading_status.items_loaded, loading_status.items_to_load
     );
 }
