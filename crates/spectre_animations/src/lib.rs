@@ -46,7 +46,7 @@ impl AnimationState {
 
         self.current_animation = animation_idx;
         self.current_idx = self.animations[animation_idx].0;
-        return true;
+        true
     }
 
     // increments the animation frame

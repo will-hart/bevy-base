@@ -47,11 +47,11 @@ impl SideRelationships {
         }
 
         let reln = relationships[side as usize];
-        return if reln & (1 << target_side) > 0 {
+        if reln & (1 << target_side) > 0 {
             SideRelationship::Enemy
         } else {
             SideRelationship::Allied
-        };
+        }
     }
 
     /// sets the relationship between the two sides (works in both directions)
