@@ -125,7 +125,7 @@ fn asset_loading_system(
             }
         }
 
-        if loader.textures.is_empty() {
+        if loader.assets.is_empty() {
             println!("Despawning entity");
             commands.despawn(entity);
         }
