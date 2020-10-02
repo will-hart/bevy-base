@@ -21,11 +21,10 @@ codegen-units = 1
 
 [patch.crates-io]
 # Can revert to default branch when PR 580 is merged
-bevy = { git = "https://github.com/will-hart/bevy", branch="asset-loader-from-instance" }
+bevy = { git = "https://github.com/bevyengine/bevy"  }
 
 [dependencies]
-# Can revert to default branch when PR 580 is merged
-bevy = { git = "https://github.com/will-hart/bevy", branch="asset-loader-from-instance" }
+bevy = { git = "https://github.com/bevyengine/bevy" }
 serde = { version = "1", features = ["derive"]}
 
 # Local dependencies
