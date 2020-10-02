@@ -2,7 +2,7 @@ use bevy::{prelude::*, render::pass::ClearColor, window::WindowMode};
 use spectre_animations::prelude::AnimationPlugin;
 use spectre_combat::prelude::AllegiancePlugin;
 use spectre_core::prelude::{BuffableStatistic, CharacterStats, Health, Mana, Movement, Stats};
-use spectre_loaders::{ResourceLoaderPlugin, TexturesToLoad};
+use spectre_loaders::{LoadAssets, ResourceLoaderPlugin};
 use spectre_time::{GameSpeedRequest, GameTimePlugin};
 
 mod constants;
@@ -29,7 +29,7 @@ fn main() {
         .add_startup_system(setup.system())
         .add_plugin(GameTimePlugin)
         .add_plugin(ResourceLoaderPlugin)
-        // .add_plugin(DataFileLoaderPlugin)
+        .add_plugin(DataFileLoaderPlugin)
         .add_plugin(AllegiancePlugin)
         .add_plugin(AnimationPlugin)
         .add_plugin(GameStatePlugin)
@@ -57,8 +57,11 @@ fn setup(mut commands: Commands) {
         })
         // this loaders approach requires at least one tick of the game loop before
         // assets handles are available, therefore can't directly spawn player sprite here
-        .spawn((TexturesToLoad {
-            textures: vec![("assets/walk_sprite_sheet.png", ANIMATED_SPRITESHEED_ID).into()],
+        .spawn((LoadAssets {
+            assets: vec![("assets/walk_sprite_sheet.png", ANIMATED_SPRITESHEED_ID)]
+                .into_iter()
+                .map(|a| a.into())
+                .collect(),
         },))
         // start the game clock running
         .spawn((GameSpeedRequest::new(1.0),));

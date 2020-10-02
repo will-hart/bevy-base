@@ -1,4 +1,4 @@
-use bevy::{asset::Handle, asset::LoadState, prelude::*};
+use bevy::{asset::Handle, asset::HandleId, asset::LoadState, prelude::*};
 
 pub mod data_loaders;
 
@@ -7,7 +7,7 @@ pub struct ResourceLoaderPlugin;
 impl Plugin for ResourceLoaderPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_resource(LoadingStatus::default())
-            .add_system(texture_loading_system.system());
+            .add_system(asset_loading_system.system());
     }
 }
 
@@ -18,35 +18,44 @@ pub struct LoadingStatus {
     pub initial_load_done: bool,
 }
 
-pub struct TextureLoadingData {
+pub enum LoaderAssetType {
+    Untyped,
+    // TODO: UntypedDirectory,
+    TextureWithId(u128),
+}
+
+/// A struct used to internally track texture loading progress.
+/// Should not be added as a separate component.
+pub struct LoadingProgressData {
     /// The path to load the asset from
     pub path: String,
 
-    /// an optional ID to assign to the texture once loaded
-    pub id: Option<u128>,
+    /// The type of asset to load. Currently only textures with an ID are separately defined
+    pub asset_type: LoaderAssetType,
 
     /// the texture handle (used to track loading progress)
-    pub handle: Option<Handle<Texture>>,
+    handle: Option<HandleId>,
 
+    /// Is set to true when the linked assets are fully loaded
     pub is_loaded: bool,
 }
 
-impl From<&str> for TextureLoadingData {
+impl From<&str> for LoadingProgressData {
     fn from(path: &str) -> Self {
-        TextureLoadingData {
+        LoadingProgressData {
             path: String::from(path),
-            id: None,
+            asset_type: LoaderAssetType::Untyped,
             handle: None,
             is_loaded: false,
         }
     }
 }
 
-impl From<(&str, u128)> for TextureLoadingData {
+impl From<(&str, u128)> for LoadingProgressData {
     fn from(data: (&str, u128)) -> Self {
-        TextureLoadingData {
+        LoadingProgressData {
             path: String::from(data.0),
-            id: Some(data.1),
+            asset_type: LoaderAssetType::TextureWithId(data.1),
             handle: None,
             is_loaded: false,
         }
@@ -54,33 +63,32 @@ impl From<(&str, u128)> for TextureLoadingData {
 }
 
 /// Stores paths to textures which will be loaded by the asset_loading_system
-pub struct TexturesToLoad {
-    pub textures: Vec<TextureLoadingData>,
+pub struct LoadAssets {
+    pub assets: Vec<LoadingProgressData>,
 }
 
-fn texture_loading_system(
+fn asset_loading_system(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut textures: ResMut<Assets<Texture>>,
     mut loading_status: ResMut<LoadingStatus>,
-    mut textures_to_load: Query<(Entity, &mut TexturesToLoad)>,
+    mut assets_to_load: Query<(Entity, &mut LoadAssets)>,
 ) {
     // trigger loading of new items
-    for (entity, mut loader) in &mut textures_to_load.iter() {
+    for (entity, mut loader) in &mut assets_to_load.iter() {
         // drain filter, but not experimental
         let mut i = 0;
-        while i < loader.textures.len() {
-            let tex = &mut loader.textures[i];
-            let handle = tex.handle;
-            if handle.is_none() {
-                tex.handle = Some(asset_server.load(tex.path.clone()).unwrap());
+        while i < loader.assets.len() {
+            let tex = &mut loader.assets[i];
+            if tex.handle.is_none() {
+                tex.handle = Some(asset_server.load_untyped(&tex.path).unwrap());
                 loading_status.items_to_load += 1;
                 i += 1;
                 continue;
             }
 
             // check loading state
-            let load_state = asset_server.get_load_state(handle.unwrap());
+            let load_state = asset_server.get_load_state_untyped(tex.handle.unwrap());
             if load_state.is_none() {
                 i += 1;
                 continue;
@@ -91,11 +99,16 @@ fn texture_loading_system(
                 LoadState::Loaded(_) => {
                     loading_status.items_loaded += 1;
 
-                    if tex.id.is_some() {
-                        // can only match up the ID here
-                        let asset = textures.get(&handle.unwrap()).unwrap().clone();
-                        textures.set(Handle::from_u128(tex.id.unwrap()), asset);
-                    }
+                    match tex.asset_type {
+                        LoaderAssetType::TextureWithId(id) => {
+                            let asset = textures
+                                .get(&Handle::from(tex.handle.unwrap()))
+                                .unwrap()
+                                .clone();
+                            textures.set(Handle::from_u128(id), asset);
+                        }
+                        _ => {}
+                    };
 
                     // texture is loaded, remove it
                     true
@@ -104,14 +117,14 @@ fn texture_loading_system(
             };
 
             if tex.is_loaded {
-                loader.textures.remove(i);
+                loader.assets.remove(i);
             } else {
                 // texture is not loaded, check the next texture
                 i += 1;
             }
         }
 
-        if loader.textures.len() == 0 {
+        if loader.assets.len() == 0 {
             println!("Despawning entity");
             commands.despawn(entity);
         }
