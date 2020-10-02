@@ -21,6 +21,7 @@ pub struct LoadingStatus {
 pub enum LoaderAssetType {
     Untyped,
     // TODO: UntypedDirectory,
+    // TODO: AudioWithId(u128),
     TextureWithId(u128),
 }
 
